@@ -1,0 +1,38 @@
+import telebot
+from random import randint
+
+x = 0
+
+bot = telebot.TeleBot("429530314:AAFt2SJ5_W-smCUAMjwfP7VAOBgG6KYp8Uw")
+
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+	bot.send_message(message.chat.id, 'start - simple start \nhelp - help \nsettings - ehhh,setting? \nsearch - surf the net \nrandom - "guess the number" game')
+
+@bot.message_handler(commands=['random'])
+def random_game(message):
+    if x == 0:
+        global x
+        x  = randint(0, 99) + 1
+        print(x)
+        bot.send_message(message.chat.id, "Guess the number")
+    else:
+        bot.send_message(message.chat.id, "You already started the game!")
+
+
+@bot.message_handler(content_types="text")
+def on_text(message):
+    if message.text.isdigit():
+        if x != 0:
+            if int(message.text) == x:
+                bot.send_message(message.chat.id, "That's right! The number is: " + str(x))
+                global x
+                x = 0
+            elif int(message.text) > x:
+                bot.send_message(message.chat.id, "less")
+            elif int(message.text) < x:
+                bot.send_message(message.chat.id, "more")
+        else:
+            bot.send_message(message.chat.id, 'To start the game type "/random"!')
+
+bot.polling()
