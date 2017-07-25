@@ -1,0 +1,173 @@
+import Foundation
+import TelegramBot
+import SafariServices
+
+
+let bot = TelegramBot(token: " ")
+let router = Router(bot: bot)
+
+var randomNum: Int = 0
+
+router["start", .slashRequired] = { context in
+    guard let from = context.message?.from else { return false }
+    
+    let startText = "Just a start message"
+    
+    bot.sendMessageAsync((context.message?.chat.id)!, startText)
+    return true
+}
+
+router["help", .slashRequired] = { context in
+    guard let from = context.message?.from else { return false }
+    let helpText = "Hi!"
+    
+    context.respondPrivatelyAsync(helpText,
+                                  groupText: "\(from.first_name), please check personal message!")
+    return true
+}
+
+router["search", .slashRequired] = { context in
+    guard let from = context.message?.from else { return false }
+    
+    var words = context.args.scanWords()
+    var x: String = ""
+    var z: Int = 0
+    
+    guard words.count != 0 else { return false }
+    
+    if words[0] == "Swift" && words.count >= 2 {
+        if words.count > 2 {
+            words.remove(at: 0)
+            for word in words {
+                z += 1
+                if z < words.count {
+                    x += "\(word)+" }
+                else {
+                    x += "\(word)" }}
+                
+                let link = "https://developer.apple.com/search/?q=\(x)"
+                bot.sendMessageAsync(context.chatId!, link)
+        }
+        else {
+            let link = "https://developer.apple.com/search/?q=\(words[1])"
+            bot.sendMessageAsync(context.chatId!, link)
+        }
+    }
+    if words[0] == "Python" && words.count >= 2 {
+        if words.count > 2 {
+            words.remove(at: 0)
+            for word in words {
+                z += 1
+                if z < words.count {
+                    x += "\(word)+" }
+                else {
+                    x += "\(word)" }}
+            
+            let link = "https://docs.python.org/3/search.html?q=\(x)&check_keywords=yes&area=default"
+            bot.sendMessageAsync(context.chatId!, link)
+        }
+        else {
+            let link = "https://docs.python.org/3/search.html?q=\(words[1])&check_keywords=yes&area=default"
+            bot.sendMessageAsync(context.chatId!, link)
+        }
+    }
+    else {
+    
+        if words.count > 1 {
+            for word in words {
+                z += 1
+                if z < words.count {
+                    x += "\(word)+" }
+                else {
+                    x += "\(word)" }}
+        
+            let link = "https://duckduckgo.com/?q=\(x)&t=ffab&ia=web"
+            bot.sendMessageAsync(context.chatId!, link) }
+        else {
+            let link = "https://duckduckgo.com/?q=\(words[0])&t=ffab&ia=web"
+            bot.sendMessageAsync(context.chatId!, link)
+        }
+    }
+    return true
+}
+
+router["random", .slashRequired] = { context in
+    guard let user = context.message?.from else { return false }
+    guard user.id != bot.user.id else { return false }
+    
+    let randomNumber = Int(arc4random_uniform(100) + 1)
+    randomNum = randomNumber
+    print(randomNum)
+    bot.sendMessageAsync(context.chatId!, "guess a number!")
+    
+    return true
+}
+
+router[.text] = { context in
+    guard let user = context.message?.from else { return false }
+    guard user.id != bot.user.id else { return false }
+    
+    let int = context.args.scanInteger()
+    var words = context.args.scanWords()
+    let other = context.args.skipRestOfString()
+    
+    let x = words.count
+    let y = (context.message?.text)!
+    var z: String = ""
+    let m = context.message?.text?.characters.count
+    
+    if x > 0 {
+    for word in words {
+        z += "\(word) "
+    }}
+    
+    let v = m! - (z.characters.count)
+    
+    let index = y.index(y.startIndex, offsetBy: (v))
+    let k = y.substring(to: index)
+    words.insert(k, at: 0)
+    
+    for word in words {
+        if word == "Роберт" || word == "роберт" || word == "Robert" || word == "robert" {
+            bot.sendMessageAsync(context.chatId!, "Роберт дурак!")
+        }
+    }
+    
+    if let realInt = int {
+        if randomNum != 0 {
+            if realInt > randomNum {
+                bot.sendMessageAsync(context.chatId!, "less")
+            }
+            else if realInt < randomNum {
+                bot.sendMessageAsync(context.chatId!, "more")
+            }
+            else if realInt == randomNum {
+                bot.sendMessageAsync(context.chatId!, "that's right! the number is: \(realInt)")
+                randomNum = 0
+            }
+        }
+        else {
+                bot.sendMessageAsync(context.chatId!, "the game is not up yet, use \"/random\" command")
+            }
+    }
+    return true
+}
+
+
+router[.new_chat_member] = { context in
+    guard let user = context.message?.new_chat_member else { return false }
+    guard let username = user.username else { return false }
+    
+    guard user.id != bot.user.id else { return false }
+    context.respondAsync("Welcome, @\(username)!")
+    return true
+}
+
+print("Ready to accept commands")
+while let update = bot.nextUpdateSync() {
+    print("--- update: \(update.debugDescription)")
+    
+    try router.process(update: update)
+}
+
+fatalError("Server stopped due to error: \(bot.lastError.unwrapOptional)")
